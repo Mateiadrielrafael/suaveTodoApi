@@ -30,25 +30,23 @@ module App =
         let dbTodo = ctx |> Queries.getTodosById id
 
         match dbTodo with 
-        | Some inner -> f (inner, ctx, id)
+        | Some inner -> f (inner, ctx)
         | None -> id |> sprintf "Cannot find todo with id %i" |> NOT_FOUND 
 
     let todoById = 
-        withTodoById (fun (inner, _, _) -> respondWithTodo inner)
+        withTodoById (fun (inner, _) -> respondWithTodo inner)
 
     let updateTodo =
-        withTodoById (fun (todo, dbContext, id) ->
+        withTodoById (fun (todo, dbContext) ->
             fun ctx -> async {
                 let body: Types.TodoDetails = parseJson ctx.request.rawForm
 
                 do! Queries.updateTodoById todo body dbContext
-                
+
                 return! respondWithTodo todo ctx 
             }) 
 
-    let patchTodo = withTodoById (fun (todo, dbContext, id) ->
-            let originalTodo = todoToRecord todo
-            
+    let patchTodo = withTodoById (fun (todo, dbContext) ->
             fun ctx -> async {
                 let body: Types.PartialTodoDetails = parseJson ctx.request.rawForm
 

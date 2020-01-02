@@ -1,8 +1,6 @@
 ﻿// Learn more about F# at http://fsharp.org
 open System
 
-// suave overwrites some stuff from f#+, so the order matters
-open FSharpPlus.Operators
 open Suave
 open Suave.Operators
 open Suave.Successful
@@ -19,7 +17,7 @@ module Utils =
           description = todo.Description
           name = todo.Name }
           
-    let parseJson (input: byte array) = input |> Encoding.UTF8.GetString |> Json.parse |> Json.deserialize
+    let inline parseJson (input: byte array) = input |> Encoding.UTF8.GetString |> Json.parse |> Json.deserialize
 
 module App =
     open Utils
@@ -39,25 +37,46 @@ module App =
     let updateTodo =
         withTodoById (fun (todo, dbContext, id) ->
             fun ctx -> async {
-                    let body: Types.TodoDetails = parseJson ctx.request.rawForm
+                let body: Types.TodoDetails = parseJson ctx.request.rawForm
 
-                    do! Queries.updateTodosById todo body dbContext
+                do! Queries.updateTodoById todo body dbContext
 
-                    let newBody: Types.Todo = {
-                        name = body.name
-                        description = body.description
-                        id = id
-                    } 
+                let newBody: Types.Todo = {
+                    name = body.name
+                    description = body.description
+                    id = id
+                } 
 
-                    let writeBody = newBody |> Json.serialize |> Json.format |> OK
+                let writeBody = newBody |> Json.serialize |> Json.format |> OK
 
-                    return! writeBody ctx 
-                }        
-        ) 
+                return! writeBody ctx 
+            }) 
+
+    let patchTodo = withTodoById (fun (todo, dbContext, id) ->
+            let originalTodo = todoToRecord todo
+            
+            fun ctx -> async {
+                let body: Types.PartialTodoDetails = parseJson ctx.request.rawForm
+
+                do! Queries.patchTodoById todo body dbContext
+
+                let newBody: Types.Todo = {
+                    name = Option.defaultValue originalTodo.name body.name
+                    description = Option.defaultValue originalTodo.description body.description
+                    id = id
+                } 
+
+                let writeBody = newBody |> Json.serialize |> Json.format |> OK
+
+                return! writeBody ctx 
+            })
 
     let mainWebPart: WebPart = choose [
-        GET >=> pathScan "/todos/%i" todoById
-        PUT >=> pathScan "/todos/%i" updateTodo]
+         pathScan "/todos/%i" (fun (id) -> choose [
+            GET >=>  todoById id
+            PUT >=>  updateTodo id
+            PATCH >=> patchTodo id
+            ])]
 
 [<EntryPoint>]
 let main _ =

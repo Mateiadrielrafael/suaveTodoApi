@@ -54,9 +54,20 @@ module Types =
                          description = description }
             }
 
+    type PartialTodoDetails =
+        { description: string option
+          name: string option }
+        static member FromJson(_: PartialTodoDetails) =
+            json {
+                let! name = Json.tryRead "name"
+                let! description = Json.tryRead "description"
+                return { name = name
+                         description = description }
+            }
 
 
 module Queries =
+    open FSharpPlus.Builders
     open Context
     open Types
 
@@ -69,9 +80,17 @@ module Queries =
         |> Seq.tryHead
 
 
-    let updateTodosById (todo: DbTodo) (details: TodoDetails) (ctx: DbContext) =
+    let updateTodoById (todo: DbTodo) (details: TodoDetails) (ctx: DbContext) =
         todo.Name <- details.name
         todo.Description <- details.description
 
         ctx.SubmitUpdatesAsync()
+
+    let patchTodoById (todo: DbTodo) (details: PartialTodoDetails) (ctx: DbContext) =
+        Option.iter (fun name -> todo.Name <- name) details.name
+        Option.iter (fun description -> todo.Description <- description) details.description
+
+        if Option.orElse details.name details.description |> Option.isSome
+        then ctx.SubmitUpdatesAsync()
+        else Async.result()
  

@@ -1,34 +1,75 @@
 ﻿// Learn more about F# at http://fsharp.org
+open System
 
+// suave overwrites some stuff from f#+, so the order matters
+open FSharpPlus.Operators
 open Suave
-open Suave.Successful
 open Suave.Operators
-open Suave.Filters
+open Suave.Successful
 open Suave.RequestErrors
 open Suave.Json
+open Suave.Filters
 
 module Utils = 
     open System.Text
+    open Db.Types
 
     let jsonToString json = json |> toJson |> Encoding.UTF8.GetString
 
+    let todoToRecord (todo: DbTodo) =
+        { id = todo.Id
+          description = todo.Description
+          name = todo.Name }
+
 module App =
     open Utils
+    open Db
 
     let todoById (id) = 
-        let todo = Db.Context.getContext() |> Db.Queries.getTodosById id
+        let todo = 
+            Context.getContext() 
+            |> Queries.getTodosById id 
+            |>> todoToRecord
 
         match todo with 
         | Some inner -> inner |> jsonToString |>  OK
         | None -> id |> sprintf "Cannot find todo with id %i" |> NOT_FOUND 
 
+    let updateTodo (id) =
+        let dbContext = Context.getContext()
+        let todo = dbContext |> Queries.getTodosById id
+
+        match todo with 
+        | Some todo -> 
+            fun ctx -> async {
+                    let body: Types.TodoDetails = ctx.request.rawForm |> fromJson
+
+                    do! Queries.updateTodosById todo body dbContext
+
+                    let newBody: Types.Todo = {
+                        name = body.name
+                        description = body.description
+                        id = id
+                    } 
+
+                    let withNewBody = newBody |> toJson |> ok
+                    return! withNewBody ctx
+                }
+                
+        | None -> id |> sprintf "Cannot find todo with id %i" |> NOT_FOUND 
+
+
     let mainWebPart: WebPart = choose [
-        GET >=> choose [
-            pathScan "/todos/%i" todoById
-        ]]
+        GET >=> pathScan "/todos/%i" todoById
+        PUT >=> pathScan "/todos/%i" updateTodo]
 
 [<EntryPoint>]
 let main _ =
-    startWebServer defaultConfig App.mainWebPart
+
+    let handleErrors (e: Exception) (message: string): WebPart = 
+        sprintf "%s: %s" message e.Message |> BAD_REQUEST  
+    let config = { defaultConfig with errorHandler = handleErrors }
+
+    startWebServer config App.mainWebPart
 
     0 // return an integer exit code

@@ -30,23 +30,31 @@ module Types =
           name: string }
 
 
-    let todoToRecord (todo: DbTodo) =
-        { id = todo.Id
-          description = todo.Description
-          name = todo.Name }
+    [<DataContract>]
+    type TodoDetails =
+        { [<field:DataMember(Name = "description")>]
+          description: string
+          [<field:DataMember(Name = "name")>]
+          name: string }
+
 
 
 module Queries =
-    open FSharpPlus.Operators
     open Context
     open Types
 
-    let getTodosById id (ctx: DbContext): Todo option =
+    let getTodosById id (ctx: DbContext): DbTodo option =
         query {
             for todo in ctx.Public.Todos do
                 where (todo.Id = id)
                 select todo
         }
         |> Seq.tryHead
-        |>> todoToRecord
+
+
+    let updateTodosById (todo: DbTodo) (details: TodoDetails) (ctx: DbContext) =
+        todo.Name <- details.name
+        todo.Description <- details.description
+
+        ctx.SubmitUpdatesAsync()
  

@@ -5,6 +5,7 @@
     <TargetFramework>netcoreapp3.1</TargetFramework>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="src/Db.fs" />
     <Compile Include="src/App.fs" />
   </ItemGroup>
   <Import Project=".paket\Paket.Restore.targets" />

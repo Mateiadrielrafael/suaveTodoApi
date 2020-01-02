@@ -5,3 +5,5 @@ framework: netcore3.1
 
 nuget FSharp.Core
 nuget Suave
+nuget SQLProvider
+nuget Npgsql

@@ -41,7 +41,7 @@ module App =
             fun ctx -> async {
                 let body: Types.TodoDetails = parseJson ctx.request.rawForm
 
-                do! Queries.updateTodoById todo body dbContext
+                do! Queries.updateTodo todo body dbContext
 
                 return! respondWithTodo todo ctx 
             }) 
@@ -50,14 +50,14 @@ module App =
             fun ctx -> async {
                 let body: Types.PartialTodoDetails = parseJson ctx.request.rawForm
 
-                do! Queries.patchTodoById todo body dbContext
+                do! Queries.patchTodo todo body dbContext
 
                 return! respondWithTodo todo ctx
             })
 
     let deleteTodo = withTodoById (fun (todo, dbContext) ->
             fun ctx -> async {
-                do! Queries.deleteTodoById todo dbContext
+                do! Queries.deleteTodo todo dbContext
 
                 return! respondWithTodo todo ctx
             })

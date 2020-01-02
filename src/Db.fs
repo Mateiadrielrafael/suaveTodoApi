@@ -85,13 +85,13 @@ module Queries =
         }
         |> Seq.toList
 
-    let updateTodoById (todo: DbTodo) (details: TodoDetails) (ctx: DbContext) =
+    let updateTodo (todo: DbTodo) (details: TodoDetails) (ctx: DbContext) =
         todo.Name <- details.name
         todo.Description <- details.description
 
         ctx.SubmitUpdatesAsync()
 
-    let patchTodoById (todo: DbTodo) (details: PartialTodoDetails) (ctx: DbContext) =
+    let patchTodo (todo: DbTodo) (details: PartialTodoDetails) (ctx: DbContext) =
         Option.iter (fun name -> todo.Name <- name) details.name
         Option.iter (fun description -> todo.Description <- description) details.description
 
@@ -99,7 +99,7 @@ module Queries =
         then ctx.SubmitUpdatesAsync()
         else Async.result()
 
-    let deleteTodoById (todo: DbTodo) (ctx: DbContext) =
+    let deleteTodo (todo: DbTodo) (ctx: DbContext) =
         todo.Delete()
 
         ctx.SubmitUpdatesAsync()
@@ -108,7 +108,7 @@ module Queries =
         async {
             let todo = ctx.Public.Todos.Create()
 
-            do! updateTodoById todo details ctx
+            do! updateTodo todo details ctx
 
             return todo
         }

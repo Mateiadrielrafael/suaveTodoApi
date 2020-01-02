@@ -70,6 +70,14 @@ module App =
         |> Json.format 
         |> OK
 
+    let createTodo ctx = async {
+            let dbContext = Context.getContext()
+            let details: Types.TodoDetails = ctx.request.rawForm |> parseJson
+            
+            let! todo = Queries.createTodo details dbContext
+
+            return! respondWithTodo todo ctx 
+        }
 
     let mainWebPart: WebPart = choose [
         pathScan "/todos/%i" (fun (id) -> choose [
@@ -80,6 +88,7 @@ module App =
             ])
         path "/todos/" >=> choose [
             GET >=> warbler listTodos
+            POST >=> createTodo
         ]]
 
 [<EntryPoint>]

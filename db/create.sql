@@ -6,8 +6,8 @@ DROP TABLE IF EXISTS "todos" CASCADE;
 
 CREATE TABLE "todos" (
     "id" SERIAL PRIMARY KEY NOT NULL,
-    "name" varchar(120) NULL,
-    "description" varchar(4000) NULL);
+    "name" varchar(120),
+    "description" varchar(4000));
 
 INSERT INTO "todos" ("name", "description") VALUES ('Example', 'I wonder if you are reading this.');
 

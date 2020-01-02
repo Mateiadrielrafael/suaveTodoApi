@@ -103,3 +103,13 @@ module Queries =
         todo.Delete()
 
         ctx.SubmitUpdatesAsync()
+
+    let createTodo (details: TodoDetails) (ctx: DbContext) =
+        async {
+            let todo = ctx.Public.Todos.Create()
+
+            do! updateTodoById todo details ctx
+
+            return todo
+        }
+ 

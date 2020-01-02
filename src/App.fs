@@ -5,13 +5,21 @@ open Suave.Successful
 open Suave.Operators
 open Suave.Filters
 open Suave.RequestErrors
+open Suave.Json
+
+module Utils = 
+    open System.Text
+
+    let jsonToString json = json |> toJson |> Encoding.UTF8.GetString
 
 module App =
+    open Utils
+
     let todoById (id) = 
         let todo = Db.Context.getContext() |> Db.Queries.getTodosById id
 
         match todo with 
-        | Some inner -> OK <| sprintf "%A" inner.Name
+        | Some inner -> inner |> jsonToString |>  OK
         | None -> id |> sprintf "Cannot find todo with id %i" |> NOT_FOUND 
 
     let mainWebPart: WebPart = choose [

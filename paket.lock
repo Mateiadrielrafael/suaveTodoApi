@@ -3,6 +3,8 @@ RESTRICTION: == netcoreapp3.1
 NUGET
   remote: https://api.nuget.org/v3/index.json
     FSharp.Core (4.7)
+    FSharpPlus (1.1.0-CI00272)
+      FSharp.Core (>= 4.6.2)
     Microsoft.NETCore.Platforms (3.1)
     Microsoft.NETCore.Targets (3.1)
     Microsoft.Win32.Registry (4.7)

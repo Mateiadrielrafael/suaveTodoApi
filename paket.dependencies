@@ -7,3 +7,4 @@ nuget FSharp.Core
 nuget Suave
 nuget SQLProvider
 nuget Npgsql
+nuget FSharpPlus 1.1.0-CI00272	

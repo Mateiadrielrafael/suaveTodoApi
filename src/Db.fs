@@ -15,10 +15,29 @@ module Context =
 
 module Types =
     open Context
+    open System.Runtime.Serialization
 
-    type Todo = DbContext.``public.todosEntity``
+    type DbTodo = DbContext.``public.todosEntity``
+
+
+    [<DataContract>]
+    type Todo =
+        { [<field:DataMember(Name = "id")>]
+          id: int
+          [<field:DataMember(Name = "description")>]
+          description: string
+          [<field:DataMember(Name = "name")>]
+          name: string }
+
+
+    let todoToRecord (todo: DbTodo) =
+        { id = todo.Id
+          description = todo.Description
+          name = todo.Name }
+
 
 module Queries =
+    open FSharpPlus.Operators
     open Context
     open Types
 
@@ -29,4 +48,5 @@ module Queries =
                 select todo
         }
         |> Seq.tryHead
+        |>> todoToRecord
  

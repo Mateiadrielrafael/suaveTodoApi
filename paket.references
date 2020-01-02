@@ -1,4 +1,5 @@
 FSharp.Core
 Suave
-nuget SQLProvider
-nuget Npgsql
+SQLProvider
+Npgsql
+FSharpPlus

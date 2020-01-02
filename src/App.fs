@@ -1,6 +1,6 @@
 ﻿// Learn more about F# at http://fsharp.org
 open System
-
+open FSharpPlus.Operators
 open Suave
 open Suave.Operators
 open Suave.Successful
@@ -62,13 +62,25 @@ module App =
                 return! respondWithTodo todo ctx
             })
 
+    let listTodos _ = 
+        Context.getContext() 
+        |> Queries.getAllTodos 
+        |>> todoToRecord 
+        |> Json.serialize 
+        |> Json.format 
+        |> OK
+
+
     let mainWebPart: WebPart = choose [
-         pathScan "/todos/%i" (fun (id) -> choose [
+        pathScan "/todos/%i" (fun (id) -> choose [
             GET >=>  todoById id
             PUT >=>  updateTodo id
             PATCH >=> patchTodo id
             DELETE >=> deleteTodo id
-            ])]
+            ])
+        path "/todos/" >=> choose [
+            GET >=> warbler listTodos
+        ]]
 
 [<EntryPoint>]
 let main _ =

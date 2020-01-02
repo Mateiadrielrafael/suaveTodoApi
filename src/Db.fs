@@ -78,6 +78,12 @@ module Queries =
         }
         |> Seq.tryHead
 
+    let getAllTodos (ctx: DbContext): DbTodo list =
+        query {
+            for todo in ctx.Public.Todos do
+                select todo
+        }
+        |> Seq.toList
 
     let updateTodoById (todo: DbTodo) (details: TodoDetails) (ctx: DbContext) =
         todo.Name <- details.name

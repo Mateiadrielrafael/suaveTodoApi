@@ -67,7 +67,6 @@ module Types =
 
 
 module Queries =
-    open FSharpPlus.Builders
     open Context
     open Types
 
@@ -93,4 +92,8 @@ module Queries =
         if Option.orElse details.name details.description |> Option.isSome
         then ctx.SubmitUpdatesAsync()
         else Async.result()
- 
+
+    let deleteTodoById (todo: DbTodo) (ctx: DbContext) =
+        todo.Delete()
+
+        ctx.SubmitUpdatesAsync()

@@ -18,6 +18,8 @@ module Utils =
           name = todo.Name }
           
     let inline parseJson (input: byte array) = input |> Encoding.UTF8.GetString |> Json.parse |> Json.deserialize
+    
+    let respondWithTodo = todoToRecord >> Json.serialize >> Json.format >> OK
 
 module App =
     open Utils
@@ -32,7 +34,7 @@ module App =
         | None -> id |> sprintf "Cannot find todo with id %i" |> NOT_FOUND 
 
     let todoById = 
-        withTodoById (fun (inner, _, _) -> inner |> todoToRecord |> Json.serialize |> Json.format |> OK)
+        withTodoById (fun (inner, _, _) -> respondWithTodo inner)
 
     let updateTodo =
         withTodoById (fun (todo, dbContext, id) ->
@@ -40,16 +42,8 @@ module App =
                 let body: Types.TodoDetails = parseJson ctx.request.rawForm
 
                 do! Queries.updateTodoById todo body dbContext
-
-                let newBody: Types.Todo = {
-                    name = body.name
-                    description = body.description
-                    id = id
-                } 
-
-                let writeBody = newBody |> Json.serialize |> Json.format |> OK
-
-                return! writeBody ctx 
+                
+                return! respondWithTodo todo ctx 
             }) 
 
     let patchTodo = withTodoById (fun (todo, dbContext, id) ->
@@ -60,15 +54,7 @@ module App =
 
                 do! Queries.patchTodoById todo body dbContext
 
-                let newBody: Types.Todo = {
-                    name = Option.defaultValue originalTodo.name body.name
-                    description = Option.defaultValue originalTodo.description body.description
-                    id = id
-                } 
-
-                let writeBody = newBody |> Json.serialize |> Json.format |> OK
-
-                return! writeBody ctx 
+                return! respondWithTodo todo ctx
             })
 
     let mainWebPart: WebPart = choose [

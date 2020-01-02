@@ -25,7 +25,7 @@ module App =
     open Utils
     open Db
 
-    let todoById (id) = 
+    let todoById (id): WebPart = 
         let todo = 
             Context.getContext() 
             |> Queries.getTodosById id 
@@ -35,7 +35,7 @@ module App =
         | Some inner -> inner |> jsonToString |>  OK
         | None -> id |> sprintf "Cannot find todo with id %i" |> NOT_FOUND 
 
-    let updateTodo (id) =
+    let updateTodo (id): WebPart =
         let dbContext = Context.getContext()
         let todo = dbContext |> Queries.getTodosById id
 
@@ -57,6 +57,7 @@ module App =
                 }
                 
         | None -> id |> sprintf "Cannot find todo with id %i" |> NOT_FOUND 
+
 
 
     let mainWebPart: WebPart = choose [

@@ -7,19 +7,19 @@ open Suave
 open Suave.Operators
 open Suave.Successful
 open Suave.RequestErrors
-open Suave.Json
 open Suave.Filters
+open Chiron
 
 module Utils = 
     open System.Text
     open Db.Types
 
-    let jsonToString json = json |> toJson |> Encoding.UTF8.GetString
-
     let todoToRecord (todo: DbTodo) =
         { id = todo.Id
           description = todo.Description
           name = todo.Name }
+          
+    let parseJson (input: byte array) = input |> Encoding.UTF8.GetString |> Json.parse |> Json.deserialize
 
 module App =
     open Utils
@@ -34,12 +34,12 @@ module App =
         | None -> id |> sprintf "Cannot find todo with id %i" |> NOT_FOUND 
 
     let todoById = 
-        (fun (inner, _, _) -> inner |> todoToRecord |> jsonToString |> OK)  |> withTodoById
+        withTodoById (fun (inner, _, _) -> inner |> todoToRecord |> Json.serialize |> Json.format |> OK)
 
     let updateTodo =
-        (fun (todo, dbContext, id) ->
+        withTodoById (fun (todo, dbContext, id) ->
             fun ctx -> async {
-                    let body: Types.TodoDetails = ctx.request.rawForm |> fromJson
+                    let body: Types.TodoDetails = parseJson ctx.request.rawForm
 
                     do! Queries.updateTodosById todo body dbContext
 
@@ -49,10 +49,11 @@ module App =
                         id = id
                     } 
 
-                    let withNewBody = newBody |> toJson |> ok
-                    return! withNewBody ctx
+                    let writeBody = newBody |> Json.serialize |> Json.format |> OK
+
+                    return! writeBody ctx 
                 }        
-        ) |> withTodoById
+        ) 
 
     let mainWebPart: WebPart = choose [
         GET >=> pathScan "/todos/%i" todoById

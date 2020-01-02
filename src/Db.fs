@@ -15,27 +15,44 @@ module Context =
 
 module Types =
     open Context
-    open System.Runtime.Serialization
+    open Chiron
 
     type DbTodo = DbContext.``public.todosEntity``
 
 
-    [<DataContract>]
     type Todo =
-        { [<field:DataMember(Name = "id")>]
-          id: int
-          [<field:DataMember(Name = "description")>]
+        { id: int
           description: string
-          [<field:DataMember(Name = "name")>]
           name: string }
 
+        static member ToJson(todo: Todo) =
+            json {
+                do! Json.write "name" todo.name
+                do! Json.write "description" todo.description
+                do! Json.write "id" todo.id
+            }
 
-    [<DataContract>]
+        static member FromJson(_: Todo) =
+            json {
+                let! name = Json.read "name"
+                let! description = Json.read "description"
+                let! id = Json.read "id"
+
+                return { name = name
+                         description = description
+                         id = id }
+            }
+
     type TodoDetails =
-        { [<field:DataMember(Name = "description")>]
-          description: string
-          [<field:DataMember(Name = "name")>]
+        { description: string
           name: string }
+        static member FromJson(_: TodoDetails) =
+            json {
+                let! name = Json.read "name"
+                let! description = Json.read "description"
+                return { name = name
+                         description = description }
+            }
 
 
 

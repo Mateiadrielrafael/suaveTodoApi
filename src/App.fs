@@ -55,11 +55,19 @@ module App =
                 return! respondWithTodo todo ctx
             })
 
+    let deleteTodo = withTodoById (fun (todo, dbContext) ->
+            fun ctx -> async {
+                do! Queries.deleteTodoById todo dbContext
+
+                return! respondWithTodo todo ctx
+            })
+
     let mainWebPart: WebPart = choose [
          pathScan "/todos/%i" (fun (id) -> choose [
             GET >=>  todoById id
             PUT >=>  updateTodo id
             PATCH >=> patchTodo id
+            DELETE >=> deleteTodo id
             ])]
 
 [<EntryPoint>]

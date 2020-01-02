@@ -25,22 +25,19 @@ module App =
     open Utils
     open Db
 
-    let todoById (id): WebPart = 
-        let todo = 
-            Context.getContext() 
-            |> Queries.getTodosById id 
-            |>> todoToRecord
+    let withTodoById f (id): WebPart =
+        let ctx = Context.getContext()
+        let dbTodo = ctx |> Queries.getTodosById id
 
-        match todo with 
-        | Some inner -> inner |> jsonToString |>  OK
+        match dbTodo with 
+        | Some inner -> f (inner, ctx, id)
         | None -> id |> sprintf "Cannot find todo with id %i" |> NOT_FOUND 
 
-    let updateTodo (id): WebPart =
-        let dbContext = Context.getContext()
-        let todo = dbContext |> Queries.getTodosById id
+    let todoById = 
+        (fun (inner, _, _) -> inner |> todoToRecord |> jsonToString |> OK)  |> withTodoById
 
-        match todo with 
-        | Some todo -> 
+    let updateTodo =
+        (fun (todo, dbContext, id) ->
             fun ctx -> async {
                     let body: Types.TodoDetails = ctx.request.rawForm |> fromJson
 
@@ -54,11 +51,8 @@ module App =
 
                     let withNewBody = newBody |> toJson |> ok
                     return! withNewBody ctx
-                }
-                
-        | None -> id |> sprintf "Cannot find todo with id %i" |> NOT_FOUND 
-
-
+                }        
+        ) |> withTodoById
 
     let mainWebPart: WebPart = choose [
         GET >=> pathScan "/todos/%i" todoById
